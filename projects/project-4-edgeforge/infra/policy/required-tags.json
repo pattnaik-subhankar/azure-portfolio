@@ -1,0 +1,17 @@
+{
+  "properties": {
+    "displayName": "EdgeForge - Audit required workload tags",
+    "policyType": "Custom",
+    "mode": "Indexed",
+    "metadata": { "category": "EdgeForge", "version": "1.0.0" },
+    "parameters": {},
+    "policyRule": {
+      "if": { "anyOf": [
+        { "field": "tags['owner']", "exists": "false" },
+        { "field": "tags['cost-center']", "exists": "false" },
+        { "field": "tags['data-classification']", "exists": "false" }
+      ]},
+      "then": { "effect": "audit" }
+    }
+  }
+}

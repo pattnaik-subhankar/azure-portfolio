@@ -1,0 +1,43 @@
+trigger:
+  branches: { include: [ main ] }
+  paths: { include: [ projects/project-4-edgeforge/* ] }
+pr:
+  branches: { include: [ main ] }
+  paths: { include: [ projects/project-4-edgeforge/* ] }
+
+variables:
+  terraformVersion: '1.7.5'
+  workingDirectory: projects/project-4-edgeforge/infra
+
+stages:
+- stage: Validate
+  jobs:
+  - job: terraform_validate
+    pool: { vmImage: ubuntu-latest }
+    steps:
+    - checkout: self
+    - task: TerraformInstaller@1
+      inputs: { terraformVersion: '$(terraformVersion)' }
+    - script: |
+        terraform fmt -check -recursive
+        terraform init -backend=false
+        terraform validate
+      workingDirectory: $(workingDirectory)
+    - script: |
+        docker run --rm -v $(System.DefaultWorkingDirectory):/src bridgecrew/checkov:latest -d /src/$(workingDirectory) --quiet
+      displayName: Terraform static analysis
+
+- stage: Plan
+  dependsOn: Validate
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+  jobs:
+  - deployment: plan_dev
+    environment: edgeforge-dev
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - script: |
+              echo "Use OIDC federation and a private Azure Storage Terraform backend."
+              echo "Publish plan for human review; production requires an Environment approval."

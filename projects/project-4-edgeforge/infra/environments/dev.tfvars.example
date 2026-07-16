@@ -1,0 +1,7 @@
+location    = "centralindia"
+environment = "dev"
+tags = {
+  owner       = "cloud-platform"
+  cost-center = "portfolio"
+  data-classification = "confidential"
+}
