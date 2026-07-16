@@ -1,0 +1,10 @@
+using './main.bicep'
+
+param environment = 'dev'
+param namePrefix = 'medisyncdevexample'
+param tags = {
+  workload: 'medisync'
+  environment: 'dev'
+  dataClassification: 'sensitive'
+  managedBy: 'bicep'
+}

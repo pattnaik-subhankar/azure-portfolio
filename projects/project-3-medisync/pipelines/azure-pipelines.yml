@@ -1,0 +1,43 @@
+trigger:
+  branches: { include: [ main ] }
+  paths: { include: [ projects/project-3-medisync/* ] }
+
+pr:
+  branches: { include: [ main ] }
+  paths: { include: [ projects/project-3-medisync/* ] }
+
+variables:
+  infraDirectory: projects/project-3-medisync/infra
+
+stages:
+- stage: Validate
+  jobs:
+  - job: bicep_validate
+    pool: { vmImage: ubuntu-latest }
+    steps:
+    - checkout: self
+    - script: |
+        az bicep install
+        az bicep build --file main.bicep
+      workingDirectory: $(infraDirectory)
+      displayName: Build Bicep
+    - script: |
+        echo "Run PSRule for Azure and repository secret scanning here."
+        echo "Treat PHI-in-log findings as release blockers."
+      displayName: Security policy gates
+
+- stage: WhatIf_Dev
+  dependsOn: Validate
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+  jobs:
+  - deployment: what_if
+    environment: medisync-dev
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - script: |
+              echo "Use Azure DevOps workload identity federation."
+              echo "Run az deployment group what-if with approved non-secret parameters."
+            displayName: OIDC what-if placeholder

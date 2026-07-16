@@ -1,0 +1,11 @@
+bin/
+obj/
+out/
+local.settings.json
+.env
+.env.*
+*.pfx
+*.pem
+*.key
+*.parameters.json
+!*.parameters.example.json
