@@ -1,0 +1,12 @@
+flowchart LR
+  Partner[Approved partner] --> WAF[Application Gateway WAF v2]
+  WAF --> APIM[APIM internal]
+  APIM --> App[Functions Premium / App Service]
+  App --> SQL[Azure SQL private endpoint]
+  App --> KV[Key Vault Premium private endpoint]
+  App --> FW[Azure Firewall Premium]
+  FW --- Hub[Hub: Bastion, Private DNS, DNS Resolver]
+  WAF --> Mon[Log Analytics + Sentinel]
+  APIM --> Mon
+  App --> Mon
+  SQL --> Mon

@@ -1,0 +1,55 @@
+trigger:
+  branches:
+    include: [ main ]
+  paths:
+    include: [ projects/project-2-paysecure/* ]
+
+pr:
+  branches:
+    include: [ main ]
+  paths:
+    include: [ projects/project-2-paysecure/* ]
+
+variables:
+  terraformVersion: '1.7.5'
+  workingDirectory: 'projects/project-2-paysecure/infra'
+
+stages:
+- stage: Validate
+  displayName: Validate Terraform and security
+  jobs:
+  - job: terraform_validate
+    pool: { vmImage: ubuntu-latest }
+    steps:
+    - checkout: self
+    - task: TerraformInstaller@1
+      inputs: { terraformVersion: '$(terraformVersion)' }
+    - script: |
+        terraform fmt -check -recursive
+        terraform init -backend=false
+        terraform validate
+      workingDirectory: $(workingDirectory)
+      displayName: Format and validate
+    - script: |
+        docker run --rm -v $(System.DefaultWorkingDirectory):/src bridgecrew/checkov:latest -d /src/$(workingDirectory) --quiet
+      displayName: Checkov static analysis
+
+- stage: Plan_Dev
+  displayName: Plan dev (approval-free)
+  dependsOn: Validate
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+  jobs:
+  - deployment: terraform_plan
+    environment: paysecure-dev
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - script: |
+              echo "Authenticate with Azure DevOps workload identity federation."
+              echo "Run terraform init with private Azure Storage backend and terraform plan."
+            displayName: OIDC plan placeholder
+
+# Production requires an Azure DevOps Environment approval and a separate,
+# OIDC-backed service connection. Never add client secrets to pipeline variables.

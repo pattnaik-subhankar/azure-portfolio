@@ -1,0 +1,19 @@
+{
+  "properties": {
+    "displayName": "PaySecure - Audit public network access on selected PaaS services",
+    "policyType": "Custom",
+    "mode": "Indexed",
+    "description": "Portfolio example: audit first, validate exemptions, then promote mature controls to Deny.",
+    "metadata": { "category": "PaySecure", "version": "1.0.0" },
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "allOf": [
+          { "field": "type", "equals": "Microsoft.Sql/servers" },
+          { "field": "Microsoft.Sql/servers/publicNetworkAccess", "equals": "Enabled" }
+        ]
+      },
+      "then": { "effect": "audit" }
+    }
+  }
+}

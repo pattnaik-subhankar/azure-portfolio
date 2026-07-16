@@ -1,0 +1,8 @@
+location        = "centralindia"
+environment     = "dev"
+hub_vnet_cidr   = "10.20.0.0/16"
+spoke_vnet_cidr = "10.21.0.0/16"
+tags = {
+  owner      = "cloud-platform"
+  cost-center = "portfolio"
+}
