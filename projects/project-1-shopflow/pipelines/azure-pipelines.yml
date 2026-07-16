@@ -1,0 +1,188 @@
+# ShopFlow — Azure DevOps CI/CD Pipeline
+# Multi-stage: Build → Dev Deploy → Manual Approval → Prod Deploy
+# Trigger: PR to main (build + PSRule); merge (auto dev); approval (prod)
+
+trigger:
+  branches:
+    include: ['main']
+  paths:
+    include: ['infra/', 'src/', 'pipelines/']
+
+pr:
+  branches:
+    include: ['main']
+  paths:
+    include: ['infra/', 'src/', 'pipelines/']
+
+variables:
+  - group: 'shopflow-credentials'        # Variable group → Key Vault (no secrets in YAML)
+  - name: 'environment'
+    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+      value: 'prod'
+    ${{ else }}:
+      value: 'dev'
+  - name: 'azureSubscription'
+    value: 'ShopFlow-ARM'               # Service connection (OIDC federation)
+
+stages:
+
+# ── Stage 1: Build & Validate ──────────────────────────────────────
+- stage: Build
+  displayName: 'Build & Validate'
+  jobs:
+  - job: Lint_Bicep
+    pool: { vmImage: 'ubuntu-latest' }
+    steps:
+    - task: UseDotNet@2
+      inputs: { packageType: 'sdk', version: '8.x' }
+    - bash: az bicep build --stdout --file infra/main.bicep
+      displayName: 'Validate Bicep compilation'
+    - bash: |
+        az bicep build --file infra/main.bicep --outdir /tmp/bicep-build
+        pip install psrule-azure
+        psrule Azure -InputPath /tmp/bicep-build -Format Bicep -As Result
+      displayName: 'PSRule — Well-Architected checks'
+    - publish: infra/
+      artifact: infra
+
+  - job: Build_Code
+    pool: { vmImage: 'ubuntu-latest' }
+    dependsOn: Lint_Bicep
+    steps:
+    - task: UseDotNet@2
+      inputs: { packageType: 'sdk', version: '8.x' }
+    - bash: dotnet test src/ShopFlow.Shared --configuration Release
+      displayName: 'Unit tests'
+    - bash: dotnet publish src/OrdersApi --configuration Release --output $(Build.ArtifactStagingDirectory)/orders-api
+      displayName: 'Publish Orders API'
+    - bash: dotnet publish src/CatalogApi --configuration Release --output $(Build.ArtifactStagingDirectory)/catalog-api
+      displayName: 'Publish Catalog API'
+    - bash: dotnet publish src/FulfillmentProcessor --configuration Release --output $(Build.ArtifactStagingDirectory)/fulfillment-processor
+      displayName: 'Publish Fulfillment Processor'
+    - publish: $(Build.ArtifactStagingDirectory)/
+      artifact: code
+
+# ── Stage 2: Dev Deployment ────────────────────────────────────────
+- stage: DevDeploy
+  displayName: 'Deploy to Dev'
+  dependsOn: Build
+  condition: succeeded()
+  variables:
+    environment: 'dev'
+  jobs:
+  - job: Deploy_Dev
+    pool: { vmImage: 'ubuntu-latest' }
+    steps:
+    - download: current
+      artifact: infra
+    - download: current
+      artifact: code
+    - task: AzureCLI@2
+      displayName: 'Bicep What-If'
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az deployment group what-if \
+            -g rg-shopflow-dev \
+            -f infra/main.bicep \
+            -p infra/main.dev.bicepparam
+    - task: AzureCLI@2
+      displayName: 'Deploy Infrastructure'
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az deployment group create \
+            -g rg-shopflow-dev \
+            -f infra/main.bicep \
+            -p infra/main.dev.bicepparam
+    - task: AzureFunctionApp@1
+      displayName: 'Deploy Orders API'
+      inputs:
+        azureSubscription: $(azureSubscription)
+        appName: 'func-shopflow-orders-dev'
+        package: $(Pipeline.Workspace)/code/orders-api/
+    - task: AzureFunctionApp@1
+      displayName: 'Deploy Catalog API'
+      inputs:
+        azureSubscription: $(azureSubscription)
+        appName: 'func-shopflow-catalog-dev'
+        package: $(Pipeline.WorkSpace)/code/catalog-api/
+    - task: AzureFunctionApp@1
+      displayName: 'Deploy Fulfillment Processor'
+      inputs:
+        azureSubscription: $(azureSubscription)
+        appName: 'func-shopflow-fulfillment-dev'
+        package: $(Pipeline.WorkSpace)/code/fulfillment-processor/
+    - bash: |
+        newman run tests/smoke/shopflow-smoke-collection.json \
+          --environment tests/smoke/dev-environment.json \
+          --reporters cli,json
+      displayName: 'Smoke Tests (Newman)'
+
+# ── Stage 3: Prod Deployment (manual approval) ──────────────────────
+- stage: ProdDeploy
+  displayName: 'Deploy to Prod'
+  dependsOn: DevDeploy
+  condition: succeeded()
+  variables:
+    environment: 'prod'
+  jobs:
+  - deployment: Deploy_Prod
+    pool: { vmImage: 'ubuntu-latest' }
+    environment: 'ShopFlow-Production'          # Pre-deployment approval gate
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: infra
+          - download: current
+            artifact: code
+          - task: AzureCLI@2
+            displayName: 'Bicep What-If (prod diff)'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az deployment group what-if \
+                  -g rg-shopflow-prod \
+                  -f infra/main.bicep \
+                  -p infra/main.prod.bicepparam
+          - task: AzureCLI@2
+            displayName: 'Deploy Infrastructure'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az deployment group create \
+                  -g rg-shopflow-prod \
+                  -f infra/main.bicep \
+                  -p infra/main.prod.bicepparam
+          - task: AzureFunctionApp@1
+            displayName: 'Deploy Orders API'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              appName: 'func-shopflow-orders-prod'
+              package: $(Pipeline.WorkSpace)/code/orders-api/
+          - task: AzureFunctionApp@1
+            displayName: 'Deploy Catalog API'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              appName: 'func-shopflow-catalog-prod'
+              package: $(Pipeline.WorkSpace)/code/catalog-api/
+          - task: AzureFunctionApp@1
+            displayName: 'Deploy Fulfillment Processor'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              appName: 'func-shopflow-fulfillment-prod'
+              package: $(Pipeline.WorkSpace)/code/fulfillment-processor/
+          - bash: |
+              newman run tests/smoke/shopflow-smoke-collection.json \
+                --environment tests/smoke/prod-environment.json
+            displayName: 'Production Smoke Tests'

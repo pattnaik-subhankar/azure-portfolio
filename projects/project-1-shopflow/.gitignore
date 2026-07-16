@@ -1,0 +1,31 @@
+# .gitignore — ShopFlow
+
+## Build outputs
+bin/
+obj/
+out/
+**/*.user
+**/*.suo
+*.cache
+
+## Azure local settings
+**/local.settings.json
+**/appsettings.Development.json
+
+## IDE
+.vs/
+.vscode/settings.json (personal)
+.idea/
+
+## OS
+Thumbs.db
+.DS_Store
+
+## Secrets
+*.pfx
+*.key
+.env
+.env.local
+
+## Bicep build artifacts
+**/bicep-build/

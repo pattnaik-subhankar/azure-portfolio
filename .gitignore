@@ -1,0 +1,20 @@
+# Secrets and local environment configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.pfx
+*.key
+
+# Editor and operating-system files
+.DS_Store
+Thumbs.db
+.vs/
+.idea/
+.vscode/settings.json
+
+# Build and deployment artifacts
+**/bin/
+**/obj/
+**/out/
+**/bicep-build/

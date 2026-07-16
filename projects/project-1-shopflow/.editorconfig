@@ -1,0 +1,26 @@
+root = true
+
+# C# / .NET
+[*.{cs,csx}]
+indent_style = space
+indent_size = 4
+
+# Bicep
+[*.bicep]
+indent_style = space
+indent_size = 2
+
+# YAML / JSON
+[*.{yml,yaml,json}]
+indent_style = space
+indent_size = 2
+
+# Markdown
+[*.md]
+trim_trailing_whitespace = false
+
+# Shell
+[*.sh]
+indent_style = space
+indent_size = 2
+end_of_line = lf
