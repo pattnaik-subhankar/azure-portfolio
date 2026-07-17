@@ -9,11 +9,11 @@
 | Phase | Deliverable | Status |
 |-------|-------------|--------|
 | 1 | Resume analysis + gap report + learning roadmap | ✅ `01-resume-analysis.md` |
-| 2 | 4 enterprise projects (full architecture docs) | 🔄 Blueprints in `projects/00-BLUEPRINTS.md`; deep-dives per project folder |
-| 3 | Portfolio website (Next.js + Tailwind + TS on Azure Static Web Apps) | ⏳ |
+| 2 | 4 enterprise projects (full architecture docs) | ✅ All 4 published: ShopFlow, PaySecure, MediSync, EdgeForge |
+| 3 | Portfolio website (static HTML/CSS/JS → GitHub Pages) | 🔄 Building now |
 | 4 | GitHub profile + repo standards | ⏳ |
 | 5 | Deployment (user decides hosting per artifact) | ⏳ blocked on user instruction |
-| 6 | Interview readiness packs (per project) | ⏳ built alongside each project deep-dive |
+| 6 | Interview readiness packs (per project) | ✅ Built alongside each project deep-dive |
 
 ## The 4 Projects (progressive complexity)
 
