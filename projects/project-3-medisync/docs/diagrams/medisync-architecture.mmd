@@ -1,0 +1,49 @@
+%% MediSync — Event-Driven Interoperability Hub, C4-style container diagram
+%% Fills the gap: medisync has no docs/diagrams/ folder. Drop into projects/project-3-medisync/docs/diagrams/
+flowchart TB
+    subgraph Sources[Approved Source Systems]
+        HL7[HL7 / FHIR feeds]
+        ADT[ADT event streams]
+    end
+
+    subgraph Ingest[Ingestion Layer]
+        APIM[APIM + Functions\nvalidate + authn]
+    end
+
+    subgraph Eventing[Eventing Backbone]
+        EH[Event Hubs\nhigh-volume ADT]
+        SBM[Service Bus\nordered clinical workflows\nsessions + dedup]
+    end
+
+    subgraph Process[Processors]
+        FP[Functions\nidempotent processing]
+    end
+
+    subgraph Data[Data Stores]
+        COS[Cosmos DB\npatient event store\nmulti-region]
+        SQL[Azure SQL\nrelational reporting]
+        BLOB[Immutable Blob\naudit trail / WORM]
+    end
+
+    subgraph Sec[Cross-Cutting]
+        KV[Key Vault CMK]
+        MON[Azure Monitor + Workbooks]
+    end
+
+    HL7 --> APIM
+    ADT --> APIM
+    APIM --> EH
+    APIM --> SBM
+    EH --> FP
+    SBM --> FP
+    FP --> COS
+    FP --> SQL
+    FP --> BLOB
+    KV -.CMK.-> COS
+    KV -.CMK.-> SQL
+    FP --> MON
+    EH --> MON
+    SBM --> MON
+    COS --> MON
+    Note1[All backends private-endpoint only]:::note
+    classDef note fill:#fff3cd,stroke:#e0a800,color:#663c00
