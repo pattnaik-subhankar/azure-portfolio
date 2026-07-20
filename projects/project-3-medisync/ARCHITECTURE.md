@@ -102,7 +102,21 @@ Capacity is driven by measured event rate, payload size, retention, consumer lag
 4. Multi-region writes improve locality/resilience but add conflict-resolution and cost complexity; choose only with a documented use case.
 5. Immutable audit archives preserve evidence but require privacy-aware retention and deletion/legal-hold governance.
 
-## 12. Future enhancements
+
+## 11a. Architecture Decision Records (ADR)
+
+Key architectural decisions for MediSync, documenting the trade-offs behind event-driven healthcare data processing.
+
+| ADR | Decision | Rationale |
+|-----|----------|-----------|
+| [ADR-001](docs/adr/adr-001-event-hubs-and-service-bus.md) | Event Hubs (streams) + Service Bus (workflows) | Split high-throughput clinical events from ordered session commands; each service does one thing well |
+| [ADR-002](docs/adr/adr-002-cosmos-partitioning-and-consistency.md) | Composite partition key (`tenantId` + time dimension) + session consistency | Avoid hot partitions from patient-only key; balance read-after-write needs vs availability |
+| [ADR-003](docs/adr/adr-003-phi-protection-cmk-and-audit.md) | CMK (HSM-backed) + immutable audit logs | Provable key control for compliance; time-based retention on audit blobs |
+| [ADR-004](docs/adr/adr-004-multi-region-dr.md) | Per-component DR strategy (RTO 1h / RPO 5m) | Cosmos multi-region single-write; Event Hubs geo-DR alias; documented failover runbooks |
+
+
+
+## 12\. Future enhancements
 
 - Synthetic FHIR bundle generator and contract tests with no real patient data.
 - Schema registry and compatibility gates.
