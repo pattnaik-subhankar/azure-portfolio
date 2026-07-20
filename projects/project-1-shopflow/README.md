@@ -1,3 +1,5 @@
+## Architecture Diagram
+
 # 🛒 ShopFlow — Enterprise E-Commerce API Platform on Azure
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]() [![IaC](https://img.shields.io/badge/IaC-Bicep-blue)]() [![Azure](https://img.shields.io/badge/cloud-Microsoft%20Azure-0078D4)]() [![WAF](https://img.shields.io/badge/Well--Architected-aligned-success)]() [![License](https://img.shields.io/badge/license-MIT-lightgrey)]()
