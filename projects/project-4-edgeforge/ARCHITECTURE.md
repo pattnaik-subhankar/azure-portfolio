@@ -103,7 +103,21 @@ Tag every subscription/resource with owner, workload, environment, cost center, 
 4. Deny policy is strong governance but must be introduced with evidence, exemption ownership, and developer guidance.
 5. Edge buffering improves resilience but makes replay, ordering, time synchronization, and device lifecycle first-class concerns.
 
-## 11. Future enhancements
+
+## 10a. Architecture Decision Records (ADR)
+
+Key architectural decisions for EdgeForge, documenting the choices behind the enterprise-scale landing zone and global IoT platform.
+
+| ADR | Decision | Rationale |
+|-----|----------|-----------|
+| [ADR-001](docs/adr/adr-001-caf-landing-zone.md) | CAF-aligned management group hierarchy | Policy-as-code governance scales to 100+ workloads; subscription-based cost allocation per plant |
+| [ADR-002](docs/adr/adr-002-aks-keda-stream-processing.md) | AKS + KEDA for stream processing over ASA | Custom enrichment (sensor calibration, anomaly scoring) exceeds declarative query capability |
+| [ADR-003](docs/adr/adr-003-active-active-ingestion.md) | 3-region active-active Event Hubs ingestion | <50ms latency per plant; local buffering during network partitions; regional data sovereignty |
+| [ADR-004](docs/adr/adr-004-policy-as-code-rollout.md) | 40+ policies as code via Terraform (deny/audit/DINE) | Hard network/security guardrails; audit trail for compliance; version-controlled exemptions |
+
+
+
+## 11\. Future enhancements
 
 - GitOps (Flux) for AKS manifests, signed images, admission control, and progressive delivery.
 - Microsoft Fabric/Synapse/Databricks selection based on analytical user patterns and data governance.
