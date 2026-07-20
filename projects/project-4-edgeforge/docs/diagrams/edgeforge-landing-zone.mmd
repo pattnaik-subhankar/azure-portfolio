@@ -1,0 +1,28 @@
+%% EdgeForge — CAF Landing Zone + IoT Workload, two-layer diagram
+%% Fills the gap: edgeforge has no docs/diagrams/ folder. Drop into projects/project-4-edgeforge/docs/diagrams/
+flowchart TB
+    subgraph Platform[Platform Layer — CAF Landing Zone]
+        direction TB
+        MG[Management Groups\nRoot -> Platform / Landing Zones / Sandbox]
+        POL[Azure Policy\npolicy-as-code guardrails]
+        IDN[Entra ID + RBAC / PIM]
+        NET[Hub networking + Firewall + Private DNS]
+        LOG[Central Log Analytics + Defender]
+        FIN[FinOps: budgets + required-tags policy]
+        MG --> POL --> IDN --> NET --> LOG --> FIN
+    end
+
+    subgraph Workload[Workload Layer — Multi-Region IoT]
+        direction TB
+        EDGE[40 Plant Edge\nStack Edge / Data Box Gateway]
+        REH[Regional Event Hubs\ntelemetry ingestion]
+        AKS[Private AKS + KEDA\nstream processing]
+        ADLS[ADLS Gen2\nbronze / silver / gold]
+        DP[Governed API + Data Products]
+        EDGE --> REH --> AKS --> ADLS --> DP
+    end
+
+    Platform -.governs.-> Workload
+    R1[Region A]:::r --- R2[Region B]:::r --- R3[Region C]:::r
+    R1 -.hosts.-> Workload
+    classDef r fill:#e7f1ff,stroke:#0078D4,color:#003a75
