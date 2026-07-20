@@ -1,5 +1,7 @@
 # MediSync — Event-Driven Patient Data Interoperability Hub
 
+## Architecture Diagram
+
 [![IaC](https://img.shields.io/badge/IaC-Bicep-0078D4)]() [![CI/CD](https://img.shields.io/badge/CI%2FCD-Azure%20DevOps-0078D4)]() [![Architecture](https://img.shields.io/badge/architecture-event--driven-success)]() [![Security](https://img.shields.io/badge/PHI-compliance--informed-blue)]()
 
 > A healthcare interoperability reference design that ingests FHIR/HL7-style events from approved systems, separates high-throughput ingestion from ordered clinical workflows, and protects sensitive patient data through private networking, managed identity, customer-managed keys, immutable audit storage, and multi-region recovery.
