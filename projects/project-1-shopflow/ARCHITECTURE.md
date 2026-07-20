@@ -244,7 +244,22 @@ shopflow-azure-platform/
 | 202-async order intake vs sync 201 | Synchronous write to SQL | Burst survival > immediate consistency; status endpoint + webhooks close the UX gap |
 | APIM v2 vs Application Gateway only | App GW + custom auth | Developer portal, product/subscription model, policy engine are the product requirements |
 
-## 19. Future Enhancements
+
+## 18a. Architecture Decision Records (ADR)
+
+Key architectural decisions for ShopFlow, documenting the rationale behind service selection and design trade-offs.
+
+| ADR | Decision | Rationale |
+|-----|----------|-----------|
+| [ADR-001](docs/adr/adr-001-load-leveling.md) | Queue-based load leveling via Service Bus | Decouple order intake from fulfillment; survive flash-sale bursts without dropping orders |
+| [ADR-002](docs/adr/adr-002-compute-choice.md) | Azure Functions Premium over AKS or App Service | Serverless with VNet integration; queue-triggered auto-scale without cluster management overhead |
+| [ADR-003](docs/adr/adr-003-messaging.md) | Service Bus (sessions) + Event Grid (fan-out) | FIFO ordering per order stream; push-based partner notifications without polling |
+| [ADR-004](docs/adr/adr-004-async-intake.md) | 202 Accepted over 201 Created | Orders survive downstream fulfillment failures; client polls or receives webhook |
+| [ADR-005](docs/adr/adr-005-identity.md) | System-assigned Managed Identity | Zero secrets in configuration; automatic credential rotation; least-privilege RBAC |
+
+
+
+## 19\. Future Enhancements
 
 - Private endpoints + hub-spoke (→ becomes Project 2)
 - Service Bus Premium with geo-DR alias
