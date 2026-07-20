@@ -1,0 +1,30 @@
+%% ShopFlow — Order Intake Sequence / Data-Flow Diagram
+%% Fills the gap where README references docs/diagrams/shopflow-architecture.png (missing).
+%% Drop into projects/project-1-shopflow/docs/diagrams/
+sequenceDiagram
+    autonumber
+    participant P as Partner / Web / Mobile
+    participant FD as Front Door (WAF)
+    participant AP as APIM (Std v2)
+    participant OA as Orders Function (EP1)
+    participant SB as Service Bus (orders-inbound)
+    participant FP as Fulfillment Processor
+    participant SQL as Azure SQL (ZR + failover group)
+    participant TE as SB Topic (order-events)
+    participant LA as Logic Apps (Std)
+
+    P->>FD: HTTPS POST /orders (JWT)
+    FD->>AP: Forward (edge cache miss)
+    AP->>AP: Validate JWT, rate-limit, inject correlation-id
+    AP->>OA: POST /orders
+    OA->>OA: Validate payload
+    OA->>SB: Enqueue order message
+    OA-->>P: 202 Accepted + status URL
+    Note over OA,SB: Load leveling — intake survives fulfillment outage
+    SB->>FP: Trigger (competing consumer)
+    FP->>SQL: Persist order (idempotent upsert)
+    FP->>TE: Publish order-event
+    TE->>LA: Fan-out (partner webhook sub)
+    TE->>LA: Fan-out (email notify sub)
+    TE->>SQL: Audit sub (immutable trail)
+    Note over SB,FP: Poison messages route to DLQ + alert on DLQ depth
