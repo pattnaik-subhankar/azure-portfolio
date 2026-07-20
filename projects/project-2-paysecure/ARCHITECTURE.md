@@ -156,7 +156,21 @@ Use the statement in the README only for a portfolio/design exercise. It demonst
 4. **Terraform:** supports modular multi-subscription delivery but requires disciplined state isolation and provider version governance.
 5. **mTLS:** improves partner assurance but introduces certificate issuance, rotation, and revocation operations.
 
-## 19. Future enhancements
+
+## 18a. Architecture Decision Records (ADR)
+
+Key architectural decisions for PaySecure, documenting the choices behind the zero-trust security posture.
+
+| ADR | Decision | Rationale |
+|-----|----------|-----------|
+| [ADR-001](docs/adr/adr-001-waf-and-internal-apim.md) | App Gateway WAF v2 + APIM internal mode | WAF at public boundary; APIM hidden in VNet with no public endpoint |
+| [ADR-002](docs/adr/adr-002-firewall-egress.md) | Azure Firewall Premium for egress inspection | FQDN filtering + TLS inspection; all spoke traffic force-tunneled through hub |
+| [ADR-003](docs/adr/adr-003-terraform-and-oidc.md) | Terraform with OIDC federation | Remote state with locking; no service principal secrets in pipelines |
+| [ADR-004](docs/adr/adr-004-mtls-and-managed-identity.md) | mTLS (partners) + Managed Identity (internal) | Defense in depth: transport + application layer auth; no shared secrets |
+
+
+
+## 19\. Future enhancements
 
 - Multi-region active-active partner ingress with Front Door Premium and regional APIM strategy.
 - APIM developer portal integration with partner onboarding workflow and certificate lifecycle automation.
